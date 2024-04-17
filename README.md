@@ -1,28 +1,15 @@
 # Managed Structure Template
-<<<<<<< HEAD
-This template is a starting point for creating a Managed [Structure](https://docs.griptape.ai/stable/griptape-framework/structures/agents/) with Griptape Cloud Skatepark. 
-It provides a basic project structure for creating a Managed Structure, but you can customize it to fit your needs.
-=======
 This template is a starting point for creating a [Structure](https://docs.griptape.ai/stable/griptape-framework/structures/agents/) with Griptape Cloud Managed Structures. 
 It provides a basic project layout for creating a Managed Structure, but you can customize it to fit your needs.
->>>>>>> upstream/main
 
 See the [Griptape CLI](https://github.com/griptape-ai/griptape-cli?tab=readme-ov-file#skatepark-emulator) instructions for how to get started with this template.
 
 ## Project Structure
-<<<<<<< HEAD
-The template provides the following project structure:
-
-- `structure/structure.py` Contains the Managed Structure code.
-- `structure/requirements.txt` Contains the dependencies for the Managed Structure. These will be automatically installed when the Structure is registered with Skatepark.
-- `example-client/client.py` Contains an example client that _uses_ with Skatepark. This is useful for testing your Managed Structure locally but ultimately you will want to integrate your Managed Structure with your own application. 
-=======
 The template provides the following project layout:
 
 - `structure/structure.py` Contains the Managed Structure code.
 - `structure/requirements.txt` Contains the dependencies for the Managed Structure. These will be automatically installed when the Structure is registered with Skatepark.
 - `example-client/client.py` Contains an example client that _uses_ the Managed Structure's API. This is useful for testing your Managed Structure locally but ultimately you will want to integrate your Managed Structure with your own application. 
->>>>>>> upstream/main
 - `example-client/pyproject.toml` Contains the dependencies for the example client. Poetry is only used for the example client and is not used by the Managed Structure itself.
 
 
