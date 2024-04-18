@@ -7,13 +7,15 @@ GT_STRUCTURE_ID = os.environ["GT_STRUCTURE_ID"]
 
 
 def run_structure(input: str) -> str:
+    dummy_args = "{\"url\": \"https://www.openjpeg.org/assets/images/opj_logo_full.png\", \"style\": \"Pixel Art\", \"prompt\": \"Generate a variation of the image that depicts two men harried by unnatural forces while climbing a mountain\"}"
+
     # Start a run with the args "What is 5 ^ 2".
     # These args will be passed into our Structure program as standard input.
     response = requests.post(
         f"{HOST}/api/structures/{GT_STRUCTURE_ID}/runs",
         json={
             "env": {},
-            "args": [input],
+            "args": [dummy_args, input],
         },
     )
     response.raise_for_status()
