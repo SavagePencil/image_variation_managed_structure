@@ -1,11 +1,10 @@
+from griptape.artifacts import TextArtifact
 from griptape.drivers import (
     GriptapeCloudEventListenerDriver,
-    LeonardoImageGenerationDriver
+    LeonardoImageGenerationDriver,
 )
 from griptape.engines import VariationImageGenerationEngine
-from griptape.events import (
-    EventListener,
-)
+from griptape.events import EventListener, FinishStructureRunEvent
 from griptape.loaders import ImageLoader
 from griptape.structures import Agent
 from griptape.tools import Calculator
@@ -14,32 +13,37 @@ import json
 import sys
 from urllib.request import urlopen
 
+
+# Returns True if this program is being run from within Griptape Cloud or via the Skatepark emulator
+def is_running_in_managed_environment():
+    return "GT_CLOUD_RUN_ID" in os.environ
+
+
 # Make sure the correct number of params were sent.
-# TODO: keep the extra param for now while we work through this
-if (len(sys.argv) != 3):
-     raise ValueError("Structure requires exactly one input parameter (JSON dictionary).")
+if len(sys.argv) != 2:
+    raise ValueError("Program requires exactly one input parameter (JSON dictionary).")
 
 # We're expecting a JSON dictionary. Make sure it worked.
 try:
     params_dict = json.loads(sys.argv[1])
 except Exception as e:
-    raise ValueError(f"Structure parameter was not a valid JSON dictionary. Error: {e}")
+    raise ValueError(f"Program parameter was not a valid JSON dictionary. Error: {e}")
 
 # OK, does it have all the tasty bits
 try:
     url = params_dict["url"]
 except Exception as e:
-    raise KeyError(f"Structure JSON dictionary missing key: {e}")
+    raise KeyError(f"Program JSON dictionary missing key: {e}")
 
 try:
     style = params_dict["style"]
 except Exception as e:
-    raise KeyError(f"Structure JSON dictionary missing key: {e}")
+    raise KeyError(f"Program JSON dictionary missing key: {e}")
 
 try:
     prompt = params_dict["prompt"]
 except Exception as e:
-    raise KeyError(f"Structure JSON dictionary missing key: {e}")
+    raise KeyError(f"Program JSON dictionary missing key: {e}")
 
 # Now make sure they're legit before actually doing anyting.
 
@@ -59,7 +63,7 @@ leonardo_model_names_to_IDs = {
     "Absolute Reality v1.6": "e316348f-7773-490e-adcd-46757c738eb7",
     "Cute Characters": "50c4f43b-f086-4838-bcac-820406244cec",
     "Leonardo Signature": "291be633-cb24-434f-898f-e662799936ad",
-    "Pixel Art": "e5a291b6-3990-495a-b1fa-7bd1864510a6"
+    "Pixel Art": "e5a291b6-3990-495a-b1fa-7bd1864510a6",
 }
 
 try:
@@ -96,31 +100,31 @@ engine = VariationImageGenerationEngine(
 )
 
 # Let's run the engine by itself.
-prompts = [
-    prompt
-]
+prompts = [prompt]
 negative_prompts = []
 try:
-    output_artifact = engine.run(prompts=prompts, negative_prompts=negative_prompts, image=image_artifact)
+    output_artifact = engine.run(
+        prompts=prompts, negative_prompts=negative_prompts, image=image_artifact
+    )
 except:
     pass
 
-# Send it back as a base-64 encoded string
-# TODO
+# We need an event driver to communicate events from our program back to Skatepark
+event_driver = GriptapeCloudEventListenerDriver(
+    base_url="http://127.0.0.1:5000", api_key="..."
+)
 
-input = sys.argv[2]
+# We will send the newly-generated image back as a base-64 encoded string
 
-if True:
-    structure = Agent(
-        tools=[Calculator(off_prompt=False)],
-        event_listeners=[
-            EventListener(
-                driver=GriptapeCloudEventListenerDriver(
-                    base_url="http://127.0.0.1:5000", api_key="..."
-                ),
-            )
-        ],
+if is_running_in_managed_environment():
+    # Let everyone know we're done
+
+    # If we were running as a Griptape Structure (e.g., Agent, Pipeline, Workflow, etc.),
+    # it would already be equipped to send the completed event.
+    # Since we're not using those, we have to manually publish the FinishStructureRunEvent.
+    task_input = TextArtifact(value=sys.argv[1])
+    done_event = FinishStructureRunEvent(
+        output_task_input=task_input, output_task_output=output_artifact
     )
 
-    structure.run(input)
-
+    event_driver.publish_event(done_event)
