@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from griptape.artifacts import TextArtifact
 from griptape.drivers import (
     GriptapeCloudEventListenerDriver,
@@ -16,6 +17,9 @@ from urllib.request import urlopen
 def is_running_in_managed_environment():
     return "GT_CLOUD_RUN_ID" in os.environ
 
+# If we're doing local development (not even within the emulator), we need some env vars.
+if not is_running_in_managed_environment():
+    load_dotenv()
 
 # Make sure the correct number of params were sent.
 if len(sys.argv) != 2:
@@ -69,6 +73,11 @@ try:
 except Exception as e:
     raise ValueError(f"Style '{style}' was not a supported style: {e}")
 
+# VALIDATE OUR KEY
+leonardo_api_key = os.environ.get("LEONARDO_API_KEY")
+if not leonardo_api_key:
+    raise ValueError(f"No value found for `LEONARDO_API_KEY`.")
+
 # VALIDATE THE URL
 try:
     image_data_as_bytes = urlopen(url).read()
@@ -84,7 +93,7 @@ except Exception as e:
 
 # Create a driver configured to use Leonardo
 leonardo_driver = LeonardoImageGenerationDriver(
-    api_key=os.environ.get("LEONARDO_API_KEY"),
+    api_key=leonardo_api_key,
     init_strength=0.3,
     steps=30,
     model=leonardo_model_ID,
@@ -107,15 +116,17 @@ try:
 except:
     pass
 
-# We need an event driver to communicate events from our program back to Skatepark
-event_driver = GriptapeCloudEventListenerDriver(
-    base_url="http://127.0.0.1:5000", api_key="..."
-)
-
 # We will send the newly-generated image back as a base-64 encoded string
+
+skatepark_url = os.environ.get("SKATEPARK_")
 
 if is_running_in_managed_environment():
     # Let everyone know we're done
+
+    # We need an event driver to communicate events from our program back to Skatepark
+    event_driver = GriptapeCloudEventListenerDriver(
+        base_url="http://127.0.0.1:5000", api_key="..."
+    )
 
     # If we were running as a Griptape Structure (e.g., Agent, Pipeline, Workflow, etc.),
     # it would already be equipped to send the completed event.
