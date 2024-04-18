@@ -4,10 +4,8 @@ from griptape.drivers import (
     LeonardoImageGenerationDriver,
 )
 from griptape.engines import VariationImageGenerationEngine
-from griptape.events import EventListener, FinishStructureRunEvent
+from griptape.events import FinishStructureRunEvent
 from griptape.loaders import ImageLoader
-from griptape.structures import Agent
-from griptape.tools import Calculator
 import os
 import json
 import sys
