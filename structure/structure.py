@@ -13,9 +13,36 @@ import sys
 from urllib.request import urlopen
 
 
-# Returns True if this program is being run from within Griptape Cloud or via the Skatepark emulator
-def is_running_in_managed_environment():
+def is_running_in_managed_environment() -> bool:
+    """Determine if the program is running in a managed environment (e.g., Griptape Cloud or Skatepark emulator).
+    Returns:
+        bool: True if the program is running in a managed environment, False otherwise.
+    """
     return "GT_CLOUD_RUN_ID" in os.environ
+
+
+def get_listener_api_key() -> str:
+    """The event driver expects a Griptape API Key as a parameter.
+    When your program is running in Griptape Cloud, you will need to provide a 
+    valid Griptape API Key in the GT_CLOUD_API_KEY environment variable 
+    in order to authorize calls. 
+    You can create an API Key by visiting https://cloud.griptape.ai/keys 
+    When running in Skatepark, the API key is not needed since it isn't validating calls.
+
+    Returns:
+        The Griptape API Key to authorize calls.
+    """
+    api_key = os.environ.get("GT_CLOUD_API_KEY")
+    if is_running_in_managed_environment() and not api_key:
+        print("""
+              ****WARNING****: No value was found for the 'GT_CLOUD_API_KEY' environment variable.
+              This environment variable is required when running in Griptape Cloud for authorization.
+              You can generate a Griptape API Key by visiting https://cloud.griptape.ai/keys.
+              Specify it as an environment variable when creating a Managed Structure in Griptape Cloud.
+              """
+              )
+    return api_key
+
 
 # If we're doing local development (not even within the emulator), we need some env vars.
 if not is_running_in_managed_environment():
@@ -117,15 +144,12 @@ except:
     pass
 
 # We will send the newly-generated image back as a base-64 encoded string
-
-skatepark_url = os.environ.get("SKATEPARK_")
-
 if is_running_in_managed_environment():
     # Let everyone know we're done
 
     # We need an event driver to communicate events from our program back to Skatepark
     event_driver = GriptapeCloudEventListenerDriver(
-        base_url="http://127.0.0.1:5000", api_key="..."
+        api_key=get_listener_api_key()
     )
 
     # If we were running as a Griptape Structure (e.g., Agent, Pipeline, Workflow, etc.),
